@@ -3,9 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -79,10 +82,22 @@ func main() {
 	fmt.Println(data["textfield"])
 	*/
 
+	_, err := session.NewSession(&aws.Config{
+		Region: aws.String("eu-west-1")},
+	)
+
+	if err != nil {
+		fmt.Println("Error creating session:")
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+
 
 
 
 	url := "https://search.roblox.com/catalog/json?SortType=RecentlyUpdated&IncludeNotForSale=false&Category=Collectibles&ResultsPerPage=1"
+	//url := "https://search.roblox.com/catalog/json?SortType=RecentlyUpdated&IncludeNotForSale=false&Category=Featured&ResultsPerPage=2"
+
 	response, err := myClient.Get(url)
 	if err != nil {
 		log.Fatal(err)
@@ -94,9 +109,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	responseString := string(responseData)
+	//responseString := string(responseData)
 
-	fmt.Println(responseString)
+	//fmt.Println(responseString)
 
 
 	/*
@@ -122,14 +137,20 @@ func main() {
 	dataJson := responseData
 	arr := JsonType{}
 	_ = json.Unmarshal([]byte(dataJson), &arr.Array)
-	fmt.Printf("Unmarshaled: %v, error: %v \n", arr.Array, err)
+//	fmt.Printf("Unmarshaled: %v, error: %v \n", arr.Array, err)
 	fmt.Printf("Name is %s \n",arr.Array[0].Name)
+	fmt.Printf("AssetId is %s \n",arr.Array[0].AssetId)
+	fmt.Printf("Updated is %s \n",arr.Array[0].Updated)
+
+
 
 }
 
 type JsonType struct {
 	Array []struct{
-		Name         string
+		AssetId		   string
+		Name           string
+		Updated        string
 	}
 }
 
