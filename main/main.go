@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"time"
 )
@@ -34,13 +36,17 @@ func main() {
 	println(foo2.Bar)
 }
 
-*/
+
 
 type Response struct {
 	string string
 }
 
+*/
+
 func main() {
+
+	/*
 	fmt.Printf("hello, world\n")
 
 	myObject := new(Response)
@@ -57,13 +63,78 @@ func main() {
 		fmt.Printf("status  ok\n")
 		json.NewDecoder(response.Body).Decode(myObject)
 		println(myObject.string)
+		fmt.Printf("%+v",  myObject.string)
+
 
 
 	}
 	if response.StatusCode != http.StatusOK {
 		fmt.Printf("status not ok\n")
 	}
+
+
+
+
+	fmt.Println(data["list"])
+	fmt.Println(data["textfield"])
+	*/
+
+
+
+
+	url := "https://search.roblox.com/catalog/json?SortType=RecentlyUpdated&IncludeNotForSale=false&Category=Collectibles&ResultsPerPage=1"
+	response, err := myClient.Get(url)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer response.Body.Close()
+
+	responseData, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	responseString := string(responseData)
+
+	fmt.Println(responseString)
+
+
+	/*
+
+
+	dataJson := `["1","2","3"]`
+	var s []string
+	json.Unmarshal([]byte(dataJson), &s)
+	print("\nhello\n")
+
+	print([]string(s))
+
+	*/
+
+/*
+	//dataJson := `["1","2","3"]`
+	var arr := JsonType{}
+	_ = json.Unmarshal([]byte(responseData), &arr)
+	log.Printf("Unmarshaled: %v", arr)
+*/
+
+
+	dataJson := responseData
+	arr := JsonType{}
+	_ = json.Unmarshal([]byte(dataJson), &arr.Array)
+	fmt.Printf("Unmarshaled: %v, error: %v \n", arr.Array, err)
+	fmt.Printf("Name is %s \n",arr.Array[0].Name)
+
 }
+
+type JsonType struct {
+	Array []struct{
+		Name         string
+	}
+}
+
+
+
 
 /*
 
