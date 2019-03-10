@@ -1,0 +1,18 @@
+pod init
+mvim Podfile 
+pod install
+git init
+git status
+git add .
+git status
+git commit -m "first commit'
+git status
+git log
+git remote add origin https://github.com/davidanew/roblox_limited_items.git
+git push -u origin master
+git tag before_navigation_controller
+git tag
+git tag -a submission_1.0_1 -m "app store submission 1.0 (1)"
+git push origin --tags
+
+
