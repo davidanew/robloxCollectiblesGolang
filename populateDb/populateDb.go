@@ -1,4 +1,4 @@
-package populateDb
+package main
 
 import (
 	"encoding/json"
@@ -17,13 +17,12 @@ var myClient = &http.Client{Timeout: 10 * time.Second}
 
 func main() {
 	const url = "https://search.roblox.com/catalog/json?SortType=RecentlyUpdated&IncludeNotForSale=false&Category=Collectibles&ResultsPerPage=30"
-//	const maxPageNumber = 100
+	const maxPageNumber = 100
 
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String("eu-west-1")},
 	)
 	svc := dynamodb.New(sess)
-	print(svc)
 
 	if err != nil {
 		fmt.Println("Error creating session:")
@@ -35,24 +34,22 @@ func main() {
 		fmt.Println("In getting JSON:")
 		fmt.Println(err.Error())
 	}
+	writeToDb(arr, svc)
 
-	for _, item := range arr.Array {
-		println(item.AssetId)
-	}
+    for pageNumber := 2; pageNumber <= maxPageNumber; pageNumber++ {
+	    arr, err := getJson(url , pageNumber)
+	    if err == nil {
+			writeToDb(arr, svc)
+		} else {
+			fmt.Println(err.Error())
+			continue
+		}
+    }
 }
-
-
-func checkDbForItem (AssetId int64 ) bool {
-
-	return false
-}
-
-
-
 
 func writeToDb (arr JsonType , svc *dynamodb.DynamoDB ) {
 	for _, item := range arr.Array {
-		fmt.Printf("Processing %s \n", item.Name)
+		fmt.Printf("Processing %d \n", item.AssetId)
 		av, err := dynamodbattribute.MarshalMap(item)
 		if err != nil {
 			fmt.Println("Got error marshalling map:")
@@ -96,7 +93,7 @@ func getJson(urlBase string, pageNumber  int) (JsonType , error) {
 type JsonType struct {
 	Array []struct{
 		AssetId		   int64
-		Name           string
+//		Name           string
 	}
 }
 
