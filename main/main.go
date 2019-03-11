@@ -21,45 +21,61 @@ func main() {
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String("eu-west-1")},
 	)
+	svc := dynamodb.New(sess)
+
+
+
 	if err != nil {
 		fmt.Println("Error creating session:")
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
-	/*
-	response, err := myClient.Get(url)
-	if err != nil {
-		fmt.Println("Error in http request:")
-		fmt.Println(err.Error())
-		os.Exit(1)
-	}
-	defer response.Body.Close()
-	responseData, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		fmt.Println("Error in ioutil:")
-		fmt.Println(err.Error())
-		os.Exit(1)
-	}
-	dataJson := responseData
-	arr := JsonType{}
-	err = json.Unmarshal([]byte(dataJson), &arr.Array)
-	if err != nil {
-		fmt.Println("Error unmarshalling:")
-		fmt.Println(err.Error())
-		os.Exit(1)
-	}
-	*/
-
 	arr, err := getJson(url , 1)
 	if err != nil {
 		fmt.Println("In getting JSON:")
 		fmt.Println(err.Error())
 	}
+	writeToDb(arr, svc)
 
 
-	//println(arr)
+    for pageNumber := 2; pageNumber < 5; pageNumber++ {
+	    arr, err := getJson(url , pageNumber)
+	    if err == nil {
+			writeToDb(arr, svc)
+		} else {
+	    	continue
+		}
 
-	svc := dynamodb.New(sess)
+    }
+
+
+
+	/*
+	for _, item := range arr.Array {
+		fmt.Printf("Processing %s \n", item.Name)
+		av, err := dynamodbattribute.MarshalMap(item)
+		if err != nil {
+			fmt.Println("Got error marshalling map:")
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+		input := &dynamodb.PutItemInput{
+			Item:      av,
+			TableName: aws.String("RobloxCollectibles"),
+		}
+		_, err = svc.PutItem(input)
+		if err != nil {
+			fmt.Println("Got error calling PutItem:")
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+	}
+	*/
+
+
+}
+
+func writeToDb (arr JsonType , svc *dynamodb.DynamoDB ) {
 	for _, item := range arr.Array {
 		fmt.Printf("Processing %s \n", item.Name)
 		av, err := dynamodbattribute.MarshalMap(item)
@@ -81,12 +97,6 @@ func main() {
 	}
 }
 
-type JsonType struct {
-	Array []struct{
-		AssetId		   int64
-		Name           string
-	}
-}
 
 func getJson(urlBase string, pageNumber  int) (JsonType , error) {
 	var url  = fmt.Sprintf("%s&PageNumber=%d", urlBase, pageNumber)
@@ -109,4 +119,10 @@ func getJson(urlBase string, pageNumber  int) (JsonType , error) {
 }
 
 
+type JsonType struct {
+	Array []struct{
+		AssetId		   int64
+		Name           string
+	}
+}
 
