@@ -17,13 +17,12 @@ var myClient = &http.Client{Timeout: 10 * time.Second}
 
 func main() {
 	const url = "https://search.roblox.com/catalog/json?SortType=RecentlyUpdated&IncludeNotForSale=false&Category=Collectibles&ResultsPerPage=30"
+	const maxPageNumber = 100
 
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String("eu-west-1")},
 	)
 	svc := dynamodb.New(sess)
-
-
 
 	if err != nil {
 		fmt.Println("Error creating session:")
@@ -37,42 +36,15 @@ func main() {
 	}
 	writeToDb(arr, svc)
 
-
-    for pageNumber := 2; pageNumber < 5; pageNumber++ {
+    for pageNumber := 2; pageNumber <= maxPageNumber; pageNumber++ {
 	    arr, err := getJson(url , pageNumber)
 	    if err == nil {
 			writeToDb(arr, svc)
 		} else {
-	    	continue
+			fmt.Println(err.Error())
+			continue
 		}
-
     }
-
-
-
-	/*
-	for _, item := range arr.Array {
-		fmt.Printf("Processing %s \n", item.Name)
-		av, err := dynamodbattribute.MarshalMap(item)
-		if err != nil {
-			fmt.Println("Got error marshalling map:")
-			fmt.Println(err.Error())
-			os.Exit(1)
-		}
-		input := &dynamodb.PutItemInput{
-			Item:      av,
-			TableName: aws.String("RobloxCollectibles"),
-		}
-		_, err = svc.PutItem(input)
-		if err != nil {
-			fmt.Println("Got error calling PutItem:")
-			fmt.Println(err.Error())
-			os.Exit(1)
-		}
-	}
-	*/
-
-
 }
 
 func writeToDb (arr JsonType , svc *dynamodb.DynamoDB ) {
@@ -97,9 +69,9 @@ func writeToDb (arr JsonType , svc *dynamodb.DynamoDB ) {
 	}
 }
 
-
 func getJson(urlBase string, pageNumber  int) (JsonType , error) {
 	var url  = fmt.Sprintf("%s&PageNumber=%d", urlBase, pageNumber)
+	println("url is %s" , url)
 	response, err := myClient.Get(url)
 	if err != nil {
 		return JsonType{}, fmt.Errorf("Error in http request: %s", err.Error())
@@ -117,7 +89,6 @@ func getJson(urlBase string, pageNumber  int) (JsonType , error) {
 	}
 	return arr , nil
 }
-
 
 type JsonType struct {
 	Array []struct{
