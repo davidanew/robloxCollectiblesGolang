@@ -1,4 +1,4 @@
-package main
+package populateDb
 
 import (
 	"encoding/json"
@@ -58,7 +58,7 @@ func writeToDb (arr JsonType , svc *dynamodb.DynamoDB ) {
 		}
 		input := &dynamodb.PutItemInput{
 			Item:      av,
-			TableName: aws.String("RobloxCollectibles"),
+			TableName: aws.String("RobloxCollectiblesTest"),
 		}
 		_, err = svc.PutItem(input)
 		if err != nil {
