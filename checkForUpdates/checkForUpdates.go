@@ -18,6 +18,20 @@ import (
 var myClient = &http.Client{Timeout: 10 * time.Second}
 const snsTopicArn = "arn:aws:sns:eu-west-1:168606352827:robloxCollectiblesTopic"
 
+//Used for unmarshalling Json
+type JsonType struct {
+	Array []struct{
+		AssetId		   int64
+		Name		   string
+
+	}
+}
+
+//Used for writing and reading db
+type Item struct {
+	AssetId		   int64
+}
+
 func main() {
 	const url = "https://search.roblox.com/catalog/json?SortType=RecentlyUpdated&IncludeNotForSale=false&Category=Collectibles&ResultsPerPage=30"
 	// Create aws session
@@ -78,42 +92,32 @@ func main() {
 	}
 }
 
-//TODO: put functions in order
-
-//this procedure writes a single asset id to the db
-func writeToDb (assetId int64 , svc *dynamodb.DynamoDB ) error {
-	fmt.Printf("Processing %d \n", assetId)
-	//the asset id needs to be put in an 'Item' struct so it can be marshalled into the db structure
-	var item = new(Item)
-	item.AssetId = assetId
-	//marshall the item into the data structure for the db write
-	//TODO: look up what av means
-	av, err := dynamodbattribute.MarshalMap(item)
+func getJson(urlBase string, pageNumber  int) (JsonType , error) {
+	//add page number to URL to select which page we want to get
+	var url  = fmt.Sprintf("%s&PageNumber=%d", urlBase, pageNumber)
+	println("url is %s" , url)
+	//do the http request
+	response, err := myClient.Get(url)
 	if err != nil {
-		return fmt.Errorf("Got error marshalling map %s", err.Error())
+		//return empty object and error message
+		return JsonType{}, fmt.Errorf("Error in http request: %s", err.Error())
 	}
-	//package data for PutItem
-	input := &dynamodb.PutItemInput{
-		Item:      av,
-		TableName: aws.String("RobloxCollectibles"),
-	}
-	//put the data in the db
-	_, err = svc.PutItem(input)
+	//wait for http request to finish
+	defer response.Body.Close()
+	//read response body to get response data
+	responseData, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return fmt.Errorf("Got error calling PutItem: %s", err.Error())
+		return JsonType{}, fmt.Errorf("Error in ioutil: %s", err.Error())
 	}
-	//no errors if we have reached this point
-	return nil
-}
-
-//publish message to sns topic
-func publish (message string, svc *sns.SNS) (error) {
-	params := &sns.PublishInput{
-		Message:  aws.String(message),
-		TopicArn: aws.String(snsTopicArn),
+	//unmarshal response data to JsonType structure 'arr'
+	dataJson := responseData
+	arr := JsonType{}
+	err = json.Unmarshal([]byte(dataJson), &arr.Array)
+	if err != nil {
+		return JsonType{}, fmt.Errorf("Error in unmarshalling: %s", err.Error())
 	}
-	_, err := svc.Publish(params)
-	return err
+	// if we have got this far then we have valid data in 'arr'
+	return arr , nil
 }
 
 //check to see if the item is in the database
@@ -155,46 +159,38 @@ func checkDbForItem (assetId int64 , svc *dynamodb.DynamoDB) (bool ,error) {
 	return true , nil
 }
 
-
-func getJson(urlBase string, pageNumber  int) (JsonType , error) {
-	//add page number to URL to select which page we want to get
-	var url  = fmt.Sprintf("%s&PageNumber=%d", urlBase, pageNumber)
-	println("url is %s" , url)
-	//do the http request
-	response, err := myClient.Get(url)
-	if err != nil {
-		//return empty object and error message
-		return JsonType{}, fmt.Errorf("Error in http request: %s", err.Error())
+//publish message to sns topic
+func publish (message string, svc *sns.SNS) (error) {
+	params := &sns.PublishInput{
+		Message:  aws.String(message),
+		TopicArn: aws.String(snsTopicArn),
 	}
-	//wait for http request to finish
-	defer response.Body.Close()
-	//don't know what this does
-	//TODO: look up 'ioutil'
-	responseData, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return JsonType{}, fmt.Errorf("Error in ioutil: %s", err.Error())
-	}
-	//unmarshal response data to JsonType structure 'arr'
-	dataJson := responseData
-	arr := JsonType{}
-	err = json.Unmarshal([]byte(dataJson), &arr.Array)
-	if err != nil {
-		return JsonType{}, fmt.Errorf("Error in unmarshalling: %s", err.Error())
-	}
-	// if we have got this far then we have valid data in 'arr'
-	return arr , nil
+	_, err := svc.Publish(params)
+	return err
 }
 
-//Used for unmarshalling Json
-type JsonType struct {
-	Array []struct{
-		AssetId		   int64
-		Name		   string
-
+//this procedure writes a single asset id to the db
+func writeToDb (assetId int64 , svc *dynamodb.DynamoDB ) error {
+	fmt.Printf("Processing %d \n", assetId)
+	//the asset id needs to be put in an 'Item' struct so it can be marshalled into the db structure
+	var item = new(Item)
+	item.AssetId = assetId
+	//marshall the item into the data structure for the db write
+	//av will be the attribute value for PutItemInput
+	av, err := dynamodbattribute.MarshalMap(item)
+	if err != nil {
+		return fmt.Errorf("Got error marshalling map %s", err.Error())
 	}
-}
-
-//Used for writing and reading db
-type Item struct {
-	AssetId		   int64
+	//create PutItemInput
+	input := &dynamodb.PutItemInput{
+		Item:      av,
+		TableName: aws.String("RobloxCollectibles"),
+	}
+	//put the data in the db
+	_, err = svc.PutItem(input)
+	if err != nil {
+		return fmt.Errorf("Got error calling PutItem: %s", err.Error())
+	}
+	//no errors if we have reached this point
+	return nil
 }
