@@ -1,5 +1,7 @@
 package main
 
+//TODO: check if exiting too early
+
 import (
 	"encoding/json"
 	"fmt"
