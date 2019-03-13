@@ -2,8 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d7c2e16b-93e3-4abe-be39-ef9250d00acc" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/checkForUpdates/checkForUpdates.go" beforeDir="false" afterPath="$PROJECT_DIR$/checkForUpdates/checkForUpdates.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/populateDb/populateDb.go" beforeDir="false" afterPath="$PROJECT_DIR$/populateDb/populateDb.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/checkForUpdates/main_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/checkForUpdates/checkForUpdates.go" beforeDir="false" afterPath="$PROJECT_DIR$/checkForUpdates/main.go" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -13,20 +14,23 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/checkForUpdates/checkForUpdates.go">
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/checkForUpdates/main.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="483">
-              <caret line="108" column="19" lean-forward="true" selection-start-line="108" selection-start-column="19" selection-end-line="108" selection-end-column="19" />
+            <state relative-caret-position="431">
+              <caret line="48" column="5" lean-forward="true" selection-start-line="48" selection-start-column="5" selection-end-line="48" selection-end-column="5" />
+              <folding>
+                <element signature="e#14#312#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/populateDb/populateDb.go">
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/checkForUpdates/main_test.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="285">
-              <caret line="30" column="43" selection-start-line="30" selection-start-column="43" selection-end-line="30" selection-end-column="43" />
+            <state relative-caret-position="90">
+              <caret line="6" column="111" selection-start-line="6" selection-start-column="111" selection-end-line="6" selection-end-column="111" />
             </state>
           </provider>
         </entry>
@@ -49,9 +53,10 @@
       <list>
         <option value="$PROJECT_DIR$/main/main.go" />
         <option value="$PROJECT_DIR$/populateDb/main.go" />
-        <option value="$PROJECT_DIR$/checkForUpdates/main.go" />
-        <option value="$PROJECT_DIR$/checkForUpdates/checkForUpdates.go" />
         <option value="$PROJECT_DIR$/populateDb/populateDb.go" />
+        <option value="$PROJECT_DIR$/checkForUpdates/checkForUpdates.go" />
+        <option value="$PROJECT_DIR$/checkForUpdates/main_test.go" />
+        <option value="$PROJECT_DIR$/checkForUpdates/main.go" />
       </list>
     </option>
   </component>
@@ -111,7 +116,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Go Build.go build populateDb.go">
+  <component name="RunManager" selected="Go Test.TestCheckForUpdates in github.com/davidanew/robloxCollectibles/checkForUpdates">
     <configuration name="go build checkForUpdates.go" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
       <module name="robloxCollectibles" />
       <working_directory value="$PROJECT_DIR$/" />
@@ -139,12 +144,47 @@
       <directory value="$PROJECT_DIR$/" />
       <method v="2" />
     </configuration>
+    <configuration name="TestCheckForUpdates in github.com/davidanew/robloxCollectibles/checkForUpdates" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="robloxCollectibles" />
+      <working_directory value="$PROJECT_DIR$/checkForUpdates" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="github.com/davidanew/robloxCollectibles/checkForUpdates" />
+      <directory value="$PROJECT_DIR$/" />
+      <filePath value="$PROJECT_DIR$/" />
+      <pattern value="^TestCheckForUpdates$" />
+      <method v="2" />
+    </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Go Test.TestCheckForUpdates in github.com/davidanew/robloxCollectibles/checkForUpdates" />
         <item itemvalue="Go Build.go build populateDb.go" />
         <item itemvalue="Go Build.go build checkForUpdates.go" />
       </list>
     </recent_temporary>
+  </component>
+  <component name="TestHistory">
+    <history-entry file="TestCheckForUpdates_in_github_com_davidanew_robloxCollectibles_checkForUpdates - 2019.03.12 at 16h 54m 52s.xml">
+      <configuration name="TestCheckForUpdates in github.com/davidanew/robloxCollectibles/checkForUpdates" configurationId="GoTestRunConfiguration" />
+    </history-entry>
+    <history-entry file="TestCheckForUpdates_in_github_com_davidanew_robloxCollectibles_checkForUpdates - 2019.03.12 at 16h 57m 34s.xml">
+      <configuration name="TestCheckForUpdates in github.com/davidanew/robloxCollectibles/checkForUpdates" configurationId="GoTestRunConfiguration" />
+    </history-entry>
+    <history-entry file="TestCheckForUpdates_in_github_com_davidanew_robloxCollectibles_checkForUpdates - 2019.03.12 at 16h 58m 16s.xml">
+      <configuration name="TestCheckForUpdates in github.com/davidanew/robloxCollectibles/checkForUpdates" configurationId="GoTestRunConfiguration" />
+    </history-entry>
+    <history-entry file="TestCheckForUpdates_in_github_com_davidanew_robloxCollectibles_checkForUpdates - 2019.03.12 at 17h 00m 30s.xml">
+      <configuration name="TestCheckForUpdates in github.com/davidanew/robloxCollectibles/checkForUpdates" configurationId="GoTestRunConfiguration" />
+    </history-entry>
+    <history-entry file="TestCheckForUpdates_in_github_com_davidanew_robloxCollectibles_checkForUpdates - 2019.03.12 at 17h 06m 29s.xml">
+      <configuration name="TestCheckForUpdates in github.com/davidanew/robloxCollectibles/checkForUpdates" configurationId="GoTestRunConfiguration" />
+    </history-entry>
+    <history-entry file="TestCheckForUpdates_in_github_com_davidanew_robloxCollectibles_checkForUpdates - 2019.03.12 at 17h 07m 22s.xml">
+      <configuration name="TestCheckForUpdates in github.com/davidanew/robloxCollectibles/checkForUpdates" configurationId="GoTestRunConfiguration" />
+    </history-entry>
+    <history-entry file="TestCheckForUpdates_in_github_com_davidanew_robloxCollectibles_checkForUpdates - 2019.03.12 at 17h 07m 46s.xml">
+      <configuration name="TestCheckForUpdates in github.com/davidanew/robloxCollectibles/checkForUpdates" configurationId="GoTestRunConfiguration" />
+    </history-entry>
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -164,7 +204,7 @@
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.49893504" visible="true" weight="0.32908913" />
+      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.49893504" weight="0.32908913" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -184,17 +224,27 @@
     <option name="version" value="1" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/checkForUpdates/checkForUpdates.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="483">
-          <caret line="108" column="19" lean-forward="true" selection-start-line="108" selection-start-column="19" selection-end-line="108" selection-end-column="19" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/populateDb/populateDb.go">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="285">
-          <caret line="30" column="43" selection-start-line="30" selection-start-column="43" selection-end-line="30" selection-end-column="43" />
+          <caret line="30" column="8" selection-start-line="29" selection-end-line="33" selection-end-column="5" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/checkForUpdates/main_test.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="90">
+          <caret line="6" column="111" selection-start-line="6" selection-start-column="111" selection-end-line="6" selection-end-column="111" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/checkForUpdates/main.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="431">
+          <caret line="48" column="5" lean-forward="true" selection-start-line="48" selection-start-column="5" selection-end-line="48" selection-end-column="5" />
+          <folding>
+            <element signature="e#14#312#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
