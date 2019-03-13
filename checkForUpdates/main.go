@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -10,20 +12,18 @@ import (
 	"github.com/aws/aws-sdk-go/service/sns"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"time"
 )
 
 //set http client here so we can get a timeout
 var myClient = &http.Client{Timeout: 10 * time.Second}
-const snsTopicArn = "arn:aws:sns:eu-west-1:168606352827:robloxCollectiblesTopic"
+//const snsTopicArn = "arn:aws:sns:eu-west-1:168606352827:robloxCollectiblesTopic"
 
 //Used for unmarshalling Json
 type JsonType struct {
 	Array []struct{
 		AssetId		   int64
 		Name		   string
-
 	}
 }
 
@@ -32,16 +32,32 @@ type Item struct {
 	AssetId		   int64
 }
 
+type Config struct {
+	dbTableName string
+	snsTopicArn string
+}
+
 func main() {
+	lambda.Start(HandleRequest)
+}
+
+func HandleRequest(ctx context.Context, config Config) error {
+	err := checkForUpdates(config.dbTableName, config.snsTopicArn)
+	if err != nil {
+		fmt.Println("Error :")
+		fmt.Println(err.Error())
+	}
+	return err
+}
+
+func checkForUpdates(dbTableName string, snsTopicArn string) error {
 	const url = "https://search.roblox.com/catalog/json?SortType=RecentlyUpdated&IncludeNotForSale=false&Category=Collectibles&ResultsPerPage=30"
 	// Create aws session
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String("eu-west-1")},
 	)
 	if err != nil {
-		fmt.Println("Error creating session:")
-		fmt.Println(err.Error())
-		os.Exit(1)
+		return fmt.Errorf("error creating session: %s", err.Error())
 	}
 	// create object for dynamo db and sns
 	svcDb := dynamodb.New(sess)
@@ -50,9 +66,7 @@ func main() {
 	//thus is enough to see if anything is added
 	arr, err := getJson(url , 1)
 	if err != nil {
-		fmt.Println("Error in getting JSON:")
-		fmt.Println(err.Error())
-		os.Exit(1)
+		return fmt.Errorf("error in getting JSON: %s", err.Error())
 	}
 	//the unmarshaled data has been put in 'arr'
 	//top level of arr is an array. step through every item of this
@@ -61,11 +75,9 @@ func main() {
 		assetId := item.AssetId
 		name := item.Name
 		//check to see if the item is in the database
-		found , err := checkDbForItem(assetId, svcDb)
+		found , err := checkDbForItem(assetId, svcDb, dbTableName)
 		if err != nil {
-			fmt.Println("Error in checking for item:")
-			fmt.Println(err.Error())
-			os.Exit(1)
+			return fmt.Errorf("error in checking for item: %s", err.Error())
 		}
 		//found indicates wether the item has been found in the database
 		fmt.Printf("Found is %t \n" , found)
@@ -75,18 +87,14 @@ func main() {
 			message := fmt.Sprintf("New item:%s", name)
 			fmt.Printf("Message is %s", message)
 			//send message
-			err := publish(message , svcSns)
+			err := publish(message , svcSns, snsTopicArn)
 			if err != nil {
-				fmt.Println("Error in sending notification:")
-				fmt.Println(err.Error())
-				os.Exit(1)
+				return fmt.Errorf("error in sending notification: %s", err.Error())
 			}
 			//add item to database
-			err = writeToDb(assetId, svcDb)
+			err = writeToDb(assetId, svcDb, dbTableName)
 			if err != nil {
-				fmt.Println("Error in writing to dB:")
-				fmt.Println(err.Error())
-				os.Exit(1)
+				return fmt.Errorf("error in writing to dB: %s", err.Error())
 			}
 		}
 	}
@@ -121,14 +129,14 @@ func getJson(urlBase string, pageNumber  int) (JsonType , error) {
 }
 
 //check to see if the item is in the database
-func checkDbForItem (assetId int64 , svc *dynamodb.DynamoDB) (bool ,error) {
+func checkDbForItem (assetId int64 , svc *dynamodb.DynamoDB, dbTableName string) (bool ,error) {
 	//GetItem needs a string input
 	assetIdString :=  fmt.Sprintf("%d",assetId);
 	fmt.Printf("Looking for: %s , " , assetIdString)
 	//run GetItem
 	result, err := svc.GetItem(&dynamodb.GetItemInput{
 		//Topic name hardcoded at the moment
-		TableName: aws.String("RobloxCollectibles"),
+		TableName: aws.String(dbTableName),
 		Key: map[string]*dynamodb.AttributeValue{
 			"AssetId": {
 				N: aws.String(assetIdString),
@@ -160,7 +168,7 @@ func checkDbForItem (assetId int64 , svc *dynamodb.DynamoDB) (bool ,error) {
 }
 
 //publish message to sns topic
-func publish (message string, svc *sns.SNS) (error) {
+func publish (message string, svc *sns.SNS, snsTopicArn string ) (error) {
 	params := &sns.PublishInput{
 		Message:  aws.String(message),
 		TopicArn: aws.String(snsTopicArn),
@@ -170,7 +178,7 @@ func publish (message string, svc *sns.SNS) (error) {
 }
 
 //this procedure writes a single asset id to the db
-func writeToDb (assetId int64 , svc *dynamodb.DynamoDB ) error {
+func writeToDb (assetId int64 , svc *dynamodb.DynamoDB , dbTableName string ) error {
 	fmt.Printf("Processing %d \n", assetId)
 	//the asset id needs to be put in an 'Item' struct so it can be marshalled into the db structure
 	var item = new(Item)
@@ -184,7 +192,7 @@ func writeToDb (assetId int64 , svc *dynamodb.DynamoDB ) error {
 	//create PutItemInput
 	input := &dynamodb.PutItemInput{
 		Item:      av,
-		TableName: aws.String("RobloxCollectibles"),
+		TableName: aws.String(dbTableName),
 	}
 	//put the data in the db
 	_, err = svc.PutItem(input)
