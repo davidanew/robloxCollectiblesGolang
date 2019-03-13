@@ -98,6 +98,7 @@ func checkForUpdates(dbTableName string, snsTopicArn string) error {
 			}
 		}
 	}
+	return nil
 }
 
 func getJson(urlBase string, pageNumber  int) (JsonType , error) {
@@ -168,7 +169,7 @@ func checkDbForItem (assetId int64 , svc *dynamodb.DynamoDB, dbTableName string)
 }
 
 //publish message to sns topic
-func publish (message string, svc *sns.SNS, snsTopicArn string ) (error) {
+func publish (message string, svc *sns.SNS, snsTopicArn string ) error {
 	params := &sns.PublishInput{
 		Message:  aws.String(message),
 		TopicArn: aws.String(snsTopicArn),
