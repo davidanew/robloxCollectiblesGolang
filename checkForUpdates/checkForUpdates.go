@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -17,39 +16,46 @@ import (
 
 //set http client here so we can get a timeout
 var myClient = &http.Client{Timeout: 10 * time.Second}
+
 //const snsTopicArn = "arn:aws:sns:eu-west-1:168606352827:robloxCollectiblesTopic"
 
 //Used for unmarshalling Json
 type JsonType struct {
-	Array []struct{
-		AssetId		   int64
-		Name		   string
+	Array []struct {
+		AssetId int64
+		Name    string
 	}
 }
 
 //Used for writing and reading db
 type Item struct {
-	AssetId		   int64
+	AssetId int64
 }
 
+//Data sent from cloudwatch
 type Config struct {
-	dbTableName string
-	snsTopicArn string
+	DbTableName string `json:"DbTableName"`
+	SnsTopicArn string `json:"SnsTopicArn"`
 }
 
 func main() {
 	lambda.Start(HandleRequest)
 }
 
-func HandleRequest(ctx context.Context, config Config) error {
-	err := checkForUpdates(config.dbTableName, config.snsTopicArn)
+//request handler for cloudwatch
+func HandleRequest(config Config) error {
+	dbTableName := config.DbTableName
+	snsTopicArn := config.SnsTopicArn
+	fmt.Printf("Running checkForUpdates with %s and %s\n", dbTableName, snsTopicArn)
+	err := checkForUpdates(dbTableName, snsTopicArn)
 	if err != nil {
-		fmt.Println("Error :")
-		fmt.Println(err.Error())
+		fmt.Println("Error : %S", err.Error())
 	}
 	return err
 }
 
+// checks for new collectible item. If found then send a notification and updates the
+// dynamo db
 func checkForUpdates(dbTableName string, snsTopicArn string) error {
 	const url = "https://search.roblox.com/catalog/json?SortType=RecentlyUpdated&IncludeNotForSale=false&Category=Collectibles&ResultsPerPage=30"
 	// Create aws session
@@ -64,7 +70,7 @@ func checkForUpdates(dbTableName string, snsTopicArn string) error {
 	svcSns := sns.New(sess)
 	//call getJson procedure to get one page of updates
 	//thus is enough to see if anything is added
-	arr, err := getJson(url , 1)
+	arr, err := getJson(url, 1)
 	if err != nil {
 		return fmt.Errorf("error in getting JSON: %s", err.Error())
 	}
@@ -75,19 +81,19 @@ func checkForUpdates(dbTableName string, snsTopicArn string) error {
 		assetId := item.AssetId
 		name := item.Name
 		//check to see if the item is in the database
-		found , err := checkDbForItem(assetId, svcDb, dbTableName)
+		found, err := checkDbForItem(assetId, svcDb, dbTableName)
 		if err != nil {
 			return fmt.Errorf("error in checking for item: %s", err.Error())
 		}
 		//found indicates wether the item has been found in the database
-		fmt.Printf("Found is %t \n" , found)
+		fmt.Printf("Found is %t \n", found)
 		//if it is not in the database then send notification and then add the new item
 		if !found {
 			//construct message to be sent using sns
 			message := fmt.Sprintf("New item:%s", name)
 			fmt.Printf("Message is %s", message)
 			//send message
-			err := publish(message , svcSns, snsTopicArn)
+			err := publish(message, svcSns, snsTopicArn)
 			if err != nil {
 				return fmt.Errorf("error in sending notification: %s", err.Error())
 			}
@@ -101,10 +107,10 @@ func checkForUpdates(dbTableName string, snsTopicArn string) error {
 	return nil
 }
 
-func getJson(urlBase string, pageNumber  int) (JsonType , error) {
+func getJson(urlBase string, pageNumber int) (JsonType, error) {
 	//add page number to URL to select which page we want to get
-	var url  = fmt.Sprintf("%s&PageNumber=%d", urlBase, pageNumber)
-	println("url is %s" , url)
+	var url = fmt.Sprintf("%s&PageNumber=%d", urlBase, pageNumber)
+	println("url is %s", url)
 	//do the http request
 	response, err := myClient.Get(url)
 	if err != nil {
@@ -126,14 +132,14 @@ func getJson(urlBase string, pageNumber  int) (JsonType , error) {
 		return JsonType{}, fmt.Errorf("Error in unmarshalling: %s", err.Error())
 	}
 	// if we have got this far then we have valid data in 'arr'
-	return arr , nil
+	return arr, nil
 }
 
 //check to see if the item is in the database
-func checkDbForItem (assetId int64 , svc *dynamodb.DynamoDB, dbTableName string) (bool ,error) {
+func checkDbForItem(assetId int64, svc *dynamodb.DynamoDB, dbTableName string) (bool, error) {
 	//GetItem needs a string input
-	assetIdString :=  fmt.Sprintf("%d",assetId);
-	fmt.Printf("Looking for: %s , " , assetIdString)
+	assetIdString := fmt.Sprintf("%d", assetId)
+	fmt.Printf("Looking for: %s , ", assetIdString)
 	//run GetItem
 	result, err := svc.GetItem(&dynamodb.GetItemInput{
 		//Topic name hardcoded at the moment
@@ -145,10 +151,7 @@ func checkDbForItem (assetId int64 , svc *dynamodb.DynamoDB, dbTableName string)
 		},
 	})
 	if err != nil {
-		fmt.Println(err.Error())
-		println("there is an error")
 		return false, fmt.Errorf("error in GetItem: %s", err.Error())
-
 	}
 	//unmarshal the response into an Item structure
 	item := Item{}
@@ -157,19 +160,19 @@ func checkDbForItem (assetId int64 , svc *dynamodb.DynamoDB, dbTableName string)
 		return false, fmt.Errorf("failed to unmarshal Record: %s", err.Error())
 	}
 	//this is the unmarshalled return from GetItem
-	fmt.Printf("Found : %v , " , item.AssetId)
+	fmt.Printf("Found : %v , ", item.AssetId)
 	//if the item is not found the return will be zero
 	if item.AssetId == 0 {
-		fmt.Printf("Need to add %d ," , assetId)
+		fmt.Printf("Need to add %d ,", assetId)
 		//asset id not found
-		return false , nil
+		return false, nil
 	}
 	//asset id found
-	return true , nil
+	return true, nil
 }
 
 //publish message to sns topic
-func publish (message string, svc *sns.SNS, snsTopicArn string ) error {
+func publish(message string, svc *sns.SNS, snsTopicArn string) error {
 	params := &sns.PublishInput{
 		Message:  aws.String(message),
 		TopicArn: aws.String(snsTopicArn),
@@ -179,7 +182,7 @@ func publish (message string, svc *sns.SNS, snsTopicArn string ) error {
 }
 
 //this procedure writes a single asset id to the db
-func writeToDb (assetId int64 , svc *dynamodb.DynamoDB , dbTableName string ) error {
+func writeToDb(assetId int64, svc *dynamodb.DynamoDB, dbTableName string) error {
 	fmt.Printf("Processing %d \n", assetId)
 	//the asset id needs to be put in an 'Item' struct so it can be marshalled into the db structure
 	var item = new(Item)
