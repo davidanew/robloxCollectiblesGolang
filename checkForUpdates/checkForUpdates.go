@@ -90,7 +90,7 @@ func checkForUpdates(dbTableName string, snsTopicArn string) error {
 		//if it is not in the database then send notification and then add the new item
 		if !found {
 			//construct message to be sent using sns
-			message := fmt.Sprintf("New item:%s", name)
+			message := fmt.Sprintf("New item: %s", name)
 			fmt.Printf("Message is %s", message)
 			//send message
 			err := publish(message, svcSns, snsTopicArn)
@@ -172,13 +172,50 @@ func checkDbForItem(assetId int64, svc *dynamodb.DynamoDB, dbTableName string) (
 }
 
 //publish message to sns topic
-func publish(message string, svc *sns.SNS, snsTopicArn string) error {
+func publish(messageText string, svc *sns.SNS, snsTopicArn string) error {
+	type ApsMessage struct {
+		Alert string `json:"alert"`
+		Sound string `json:"sound"`
+	}
+	type ApnsMessage struct {
+		ApsMessage `json:"aps"`
+	}
+	apnsMessage := ApnsMessage{
+		ApsMessage : ApsMessage{
+			Alert:messageText,
+			Sound:"default",
+		},
+	}
+	apnsMessageJson, _ := json.Marshal(apnsMessage)
+	apnsMessageString := string(apnsMessageJson)
+	println (apnsMessageString)
+	type MessageBody struct {
+		Default string `json:"default"`
+		APNS string `json:"APNS"`
+		APNS_SANDBOX string `json:"APNS_SANDBOX"`
+	}
+	type Message struct {
+		MessageBody
+	}
+	message := Message{
+		MessageBody: MessageBody{
+			Default:      messageText,
+			APNS:         apnsMessageString,
+			APNS_SANDBOX: apnsMessageString,
+		},
+	}
+	messageJson, _ := json.Marshal(message)
+	messageString := string(messageJson)
+	println (messageString)
+
 	params := &sns.PublishInput{
-		Message:  aws.String(message),
+		MessageStructure:   aws.String("type: json"),
+		Message:  aws.String(messageString),
 		TopicArn: aws.String(snsTopicArn),
 	}
 	_, err := svc.Publish(params)
 	return err
+
 }
 
 //this procedure writes a single asset id to the db
